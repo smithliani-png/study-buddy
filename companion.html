@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Study Buddy</title>
+<!-- 
+  WHY THIS FONT: "Press Start 2P" is a Google Font that looks exactly like 
+  old GameBoy/NES text. It's free, loads from the web, and instantly 
+  screams 90s game. No install needed.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  /* 
+    WHY CSS VARIABLES: We define all colours ONCE here at the top.
+    If you want to change the whole colour scheme later, you change 
+    it in ONE place and it updates everywhere. This is called a 
+    "design token" system - professionals use this on big projects.
+  */
+  :root {
+    --bg: #1a1a2e;
+    --screen-bg: #0f3460;
+    --screen-glow: #16213e;
+    --pixel-green: #00ff88;
+    --pixel-yellow: #ffd700;
+    --pixel-pink: #ff6b9d;
+    --pixel-blue: #00d4ff;
+    --pixel-red: #ff4757;
+    --pixel-orange: #ff9f43;
+    --white: #e8f4f8;
+    --grey: #a8b2c8;
+    --dark: #0a0a1a;
+    --border: 4px solid var(--pixel-green);
+    --shadow: 6px 6px 0px #000;
+  }
+
+  /* WHY * RESET: Browsers add their own padding/margin by default.
+     This wipes that so we start clean. */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Press Start 2P', monospace;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* WHY THIS BACKGROUND: Creates a subtle grid pattern 
+       that looks like graph paper / old computer screens */
+    background-image: 
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    padding: 10px;
+  }
+
+  /* 
+    THE DEVICE SHELL - looks like a Tamagotchi/GameBoy 
+    WHY MAX-WIDTH 420px: That's roughly phone width. 
+    This app is DESIGNED for your phone first.
+  */
+  .device {
+    width: 100%;
+    max-width: 420px;
+    background: linear-gradient(145deg, #2d2d5e, #1a1a3e);
+    border-radius: 24px 24px 60px 60px;
+    padding: 20px;
+    border: 3px solid rgba(0,255,136,0.3);
+    box-shadow: 
+      0 0 40px rgba(0,255,136,0.1),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  /* The "screen" area - like the LCD on a Tamagotchi */
+  .screen {
+    background: var(--screen-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 3px solid #000;
+    box-shadow: 
+      inset 0 0 30px rgba(0,0,0,0.5),
+      0 0 20px rgba(0,212,255,0.2);
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Scanline effect - makes it look like an old monitor */
+  .screen::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ==================
+     ONBOARDING SCREENS
+     ================== */
+  .onboarding {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 460px;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .onboarding.hidden { display: none; }
+
+  .onboarding h1 {
+    font-size: 10px;
+    color: var(--pixel-green);
+    line-height: 2;
+    text-shadow: 0 0 10px var(--pixel-green);
+    /* WHY TEXT-SHADOW: Creates that "glowing screen" effect 
+       you see on old CRT monitors */
+  }
+
+  .onboarding p {
+    font-size: 7px;
+    color: var(--grey);
+    line-height: 2;
+  }
+
+  /* 
+    WHY PIXEL-INPUT STYLE: Regular inputs look wrong in a retro game.
+    We make it look like a text box FROM the game era.
+  */
+  .pixel-input {
+    width: 100%;
+    background: var(--dark);
+    border: 3px solid var(--pixel-green);
+    color: var(--pixel-green);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 12px;
+    outline: none;
+    text-align: center;
+    box-shadow: var(--shadow);
+    caret-color: var(--pixel-green);
+  }
+
+  .pixel-input:focus {
+    border-color: var(--pixel-yellow);
+    box-shadow: 0 0 15px rgba(255,215,0,0.3), var(--shadow);
+  }
+
+  /* Buttons that look like game controller buttons */
+  .pixel-btn {
+    background: var(--pixel-green);
+    color: var(--dark);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    padding: 14px 24px;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* WHY THIS HOVER: Simulates pressing a physical button */
+  .pixel-btn:hover {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0px #000;
+  }
+
+  .pixel-btn:active {
+    transform: translate(6px, 6px);
+    box-shadow: 0px 0px 0px #000;
+  }
+
+  .pixel-btn.secondary {
+    background: var(--screen-glow);
+    color: var(--pixel-blue);
+    border: 3px solid var(--pixel-blue);
+  }
+
+  /* Track selection buttons */
+  .track-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .track-btn {
+    background: var(--screen-glow);
+    border: 3px solid var(--grey);
+    color: var(--grey);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    padding: 12px 8px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 2;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+  }
+
+  .track-btn:hover, .track-btn.selected {
+    border-color: var(--pixel-yellow);
+    color: var(--pixel-yellow);
+    background: rgba(255,215,0,0.1);
+    box-shadow: 0 0 10px rgba(255,215,0,0.3), var(--shadow);
+  }
+
+  .track-btn .track-icon {
+    font-size: 20px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* ==================
+     MAIN DASHBOARD
+     ================== */
+  .dashboard {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dashboard.active { display: flex; }
+
+  /* Top bar - name and streak */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(0,255,136,0.2);
+  }
+
+  .player-name {
+    font-size: 7px;
+    color: var(--pixel-green);
+  }
+
+  .streak-display {
+    font-size: 7px;
+    color: var(--pixel-orange);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* The companion display area - this is where your stick man lives */
+  .companion-area {
+    background: var(--screen-glow);
+    border: 3px solid rgba(0,255,136,0.2);
+    border-radius: 8px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 16px;
+  }
+
+  /* 
+    WHY THIS ANIMATION: The companion "bounces" gently when idle.
+    This is CSS keyframe animation - we define start and end states,
+    CSS handles the smooth movement between them automatically.
+  */
+  /* 
+    WHY INVERT: Your stick man PNGs are black on transparent.
+    Our app background is dark. Black on dark = invisible.
+    filter: invert(1) flips black to white instantly.
+    No need to redo anything in Canva. One CSS line fixes it.
+    This is also your first lesson in CSS filters — they can
+    do brightness, contrast, blur, hue-rotate and more.
+  */
+  .companion-img {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    filter: invert(1);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  .companion-img.shaking { animation: shake 0.5s ease-in-out 3; }
+  .companion-img.spinning { animation: spin 0.8s ease-in-out; }
+
+  /* Placeholder stick man (SVG drawn in code until real PNGs arrive) */
+  .stick-placeholder {
+    width: 120px;
+    height: 140px;
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  .companion-name-tag {
+    font-size: 7px;
+    color: var(--pixel-yellow);
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .companion-mood {
+    font-size: 6px;
+    color: var(--grey);
+    margin-top: 4px;
+    text-align: center;
+    min-height: 14px;
+  }
+
+  /* XP / Hunger bar */
+  .stats-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-label {
+    font-size: 6px;
+    color: var(--grey);
+    width: 50px;
+    flex-shrink: 0;
+  }
+
+  /* 
+    WHY PIXEL BAR: Progress bars that look chunky and retro.
+    The inner div animates its width using CSS transitions.
+  */
+  .pixel-bar {
+    flex: 1;
+    height: 16px;
+    background: var(--dark);
+    border: 2px solid rgba(255,255,255,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pixel-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+    position: relative;
+  }
+
+  .pixel-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+  }
+
+  .pixel-bar-fill.green { background: var(--pixel-green); }
+  .pixel-bar-fill.yellow { background: var(--pixel-yellow); }
+  .pixel-bar-fill.pink { background: var(--pixel-pink); }
+
+  .stat-value {
+    font-size: 6px;
+    color: var(--white);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Current task area */
+  .current-task {
+    background: var(--screen-glow);
+    border: 3px solid var(--pixel-blue);
+    padding: 12px;
+    box-shadow: 0 0 10px rgba(0,212,255,0.2);
+  }
+
+  .task-header {
+    font-size: 6px;
+    color: var(--pixel-blue);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .task-text {
+    font-size: 7px;
+    color: var(--white);
+    line-height: 2;
+    margin-bottom: 10px;
+  }
+
+  .task-deadline {
+    font-size: 6px;
+    color: var(--pixel-orange);
+  }
+
+  /* Action buttons at the bottom */
+  .action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .action-btn {
+    background: var(--screen-glow);
+    border: 3px solid var(--pixel-green);
+    color: var(--pixel-green);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    padding: 10px 6px;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+    line-height: 1.8;
+  }
+
+  .action-btn:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 4px 4px 0 #000;
+    background: rgba(0,255,136,0.1);
+  }
+
+  .action-btn:active {
+    transform: translate(6px, 6px);
+    box-shadow: 0 0 0 #000;
+  }
+
+  .action-btn.danger {
+    border-color: var(--pixel-red);
+    color: var(--pixel-red);
+  }
+
+  .action-btn.yellow {
+    border-color: var(--pixel-yellow);
+    color: var(--pixel-yellow);
+  }
+
+  /* Badge wall */
+  .badge-section {
+    border-top: 2px solid rgba(0,255,136,0.2);
+    padding-top: 10px;
+  }
+
+  .badge-header {
+    font-size: 6px;
+    color: var(--grey);
+    margin-bottom: 8px;
+  }
+
+  .badge-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .badge {
+    width: 36px;
+    height: 36px;
+    background: var(--screen-glow);
+    border: 2px solid var(--grey);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    opacity: 0.3;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .badge.unlocked {
+    opacity: 1;
+    border-color: var(--pixel-yellow);
+    box-shadow: 0 0 8px rgba(255,215,0,0.5);
+    animation: badgePop 0.4s ease;
+  }
+
+  @keyframes badgePop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  /* Notification/message popup */
+  .popup {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--dark);
+    border: 3px solid var(--pixel-green);
+    color: var(--pixel-green);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    padding: 12px 16px;
+    max-width: 300px;
+    text-align: center;
+    line-height: 2;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+
+  .popup.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Device buttons below the screen (decorative + functional) */
+  .device-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 10px;
+  }
+
+  .d-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .d-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 rgba(0,0,0,0.5);
+  }
+
+  .d-btn.green { background: var(--pixel-green); }
+  .d-btn.red { background: var(--pixel-red); }
+  .d-btn.yellow { background: var(--pixel-yellow); }
+
+  /* Level up flash */
+  .level-flash {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,215,0,0.3);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    font-size: 10px;
+    color: var(--pixel-yellow);
+    text-shadow: 0 0 20px var(--pixel-yellow);
+    animation: flash 0.5s ease-in-out 3;
+  }
+
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* Confetti particles */
+  .confetti-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    overflow: hidden;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    animation: confettiFall 1.5s ease-in forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Scrollbar styling because why not */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--dark); }
+  ::-webkit-scrollbar-thumb { background: var(--pixel-green); }
+</style>
+</head>
+<body>
+
+<div class="confetti-container" id="confettiContainer"></div>
+
+<div class="device">
+  <div class="screen" id="mainScreen">
+
+    <!-- ==================
+         SCREEN 1: Welcome
+         ================== -->
+    <div class="onboarding" id="screen1">
+      <div style="font-size:40px; animation: bounce 2s infinite;">
+        <!-- Placeholder until real stick man PNG added -->
+        <svg width="80" height="100" viewBox="0 0 80 100" style="animation: bounce 2s ease-in-out infinite;">
+          <circle cx="40" cy="18" r="14" fill="none" stroke="#00ff88" stroke-width="3"/>
+          <line x1="40" y1="32" x2="40" y2="65" stroke="#00ff88" stroke-width="3"/>
+          <line x1="40" y1="42" x2="20" y2="55" stroke="#00ff88" stroke-width="3"/>
+          <line x1="40" y1="42" x2="60" y2="55" stroke="#00ff88" stroke-width="3"/>
+          <line x1="40" y1="65" x2="25" y2="88" stroke="#00ff88" stroke-width="3"/>
+          <line x1="40" y1="65" x2="55" y2="88" stroke="#00ff88" stroke-width="3"/>
+          <circle cx="34" cy="15" r="2" fill="#00ff88"/>
+          <circle cx="46" cy="15" r="2" fill="#00ff88"/>
+          <path d="M 33 23 Q 40 28 47 23" fill="none" stroke="#00ff88" stroke-width="2"/>
+        </svg>
+      </div>
+      <h1>STUDY<br>BUDDY</h1>
+      <p>your learning<br>companion<br>awaits...</p>
+      <input type="text" class="pixel-input" id="userName" placeholder="YOUR NAME" maxlength="12">
+      <button class="pixel-btn" onclick="goToScreen2()">▶ START</button>
+    </div>
+
+    <!-- ==================
+         SCREEN 2: Name your companion
+         ================== -->
+    <div class="onboarding hidden" id="screen2">
+      <svg width="80" height="100" viewBox="0 0 80 100" style="animation: bounce 2s ease-in-out infinite;">
+        <circle cx="40" cy="18" r="14" fill="none" stroke="#ffd700" stroke-width="3"/>
+        <line x1="40" y1="32" x2="40" y2="65" stroke="#ffd700" stroke-width="3"/>
+        <line x1="40" y1="42" x2="15" y2="35" stroke="#ffd700" stroke-width="3"/>
+        <line x1="40" y1="42" x2="65" y2="35" stroke="#ffd700" stroke-width="3"/>
+        <line x1="40" y1="65" x2="25" y2="88" stroke="#ffd700" stroke-width="3"/>
+        <line x1="40" y1="65" x2="55" y2="88" stroke="#ffd700" stroke-width="3"/>
+        <circle cx="34" cy="15" r="2" fill="#ffd700"/>
+        <circle cx="46" cy="15" r="2" fill="#ffd700"/>
+        <path d="M 33 23 Q 40 28 47 23" fill="none" stroke="#ffd700" stroke-width="2"/>
+        <text x="25" y="8" fill="#ffd700" font-size="8">?</text>
+      </svg>
+      <h1 style="color: var(--pixel-yellow);">NAME YOUR<br>BUDDY</h1>
+      <p>they will keep<br>you on track<br>(or judge you)</p>
+      <input type="text" class="pixel-input" id="buddyName" placeholder="BUDDY'S NAME" maxlength="12" style="border-color: var(--pixel-yellow); color: var(--pixel-yellow);">
+      <button class="pixel-btn" onclick="goToScreen3()" style="background: var(--pixel-yellow);">▶ NEXT</button>
+      <button class="pixel-btn secondary" onclick="goToScreen1()">◀ BACK</button>
+    </div>
+
+    <!-- ==================
+         SCREEN 3: Pick learning track
+         ================== -->
+    <div class="onboarding hidden" id="screen3">
+      <h1 style="color: var(--pixel-blue); font-size: 8px;">CHOOSE YOUR<br>MISSION</h1>
+      <p style="font-size: 6px;">what are you<br>learning first?</p>
+      <div class="track-grid">
+        <button class="track-btn" onclick="selectTrack('🔐 Cyber Security', this)">
+          <span class="track-icon">🔐</span>
+          CYBER<br>SECURITY
+        </button>
+        <button class="track-btn" onclick="selectTrack('🐍 Python', this)">
+          <span class="track-icon">🐍</span>
+          PYTHON<br>BASICS
+        </button>
+        <button class="track-btn" onclick="selectTrack('🤖 AI & ML', this)">
+          <span class="track-icon">🤖</span>
+          AI &<br>MACHINE<br>LEARNING
+        </button>
+        <button class="track-btn" onclick="selectTrack('📊 Data Analytics', this)">
+          <span class="track-icon">📊</span>
+          DATA<br>ANALYTICS
+        </button>
+        <button class="track-btn" onclick="selectTrack('🌐 Web Dev', this)">
+          <span class="track-icon">🌐</span>
+          WEB<br>DEV
+        </button>
+        <button class="track-btn" onclick="selectTrack('🔎 Digital Forensics', this)">
+          <span class="track-icon">🔎</span>
+          DIGITAL<br>FORENSICS
+        </button>
+      </div>
+      <div style="width:100%; margin-top: -8px;">
+        <p style="font-size:6px; color: var(--grey); text-align:center; margin-bottom:8px; line-height:2;">
+          🔐 TRYHACKME USERNAME<br>
+          <span style="color:var(--pixel-green); font-size:5px;">(optional - enables verified XP)</span>
+        </p>
+        <input type="text" class="pixel-input" id="thmUsername" 
+          placeholder="e.g. smithliani" 
+          style="font-size:8px; border-color: var(--pixel-blue); color: var(--pixel-blue);">
+      </div>
+      <button class="pixel-btn" id="startBtn" onclick="startGame()" style="background: var(--pixel-blue); opacity: 0.4;" disabled>▶ LET'S GO</button>
+      <button class="pixel-btn secondary" onclick="goToScreen2()">◀ BACK</button>    </div>
+
+    <!-- ==================
+         MAIN DASHBOARD
+         ================== -->
+    <div class="dashboard" id="dashboard">
+
+      <div class="top-bar">
+        <div class="player-name" id="displayPlayerName">PLAYER</div>
+        <div class="streak-display">
+          🔥 <span id="streakCount">0</span> DAYS
+        </div>
+      </div>
+
+      <!-- Companion display -->
+      <div class="companion-area">
+        <div class="level-flash" id="levelFlash">LEVEL UP!</div>
+        
+        <!-- 
+          THIS IS WHERE YOUR PNG IMAGES GO.
+          Right now it shows an SVG placeholder.
+          When you send me the PNGs, I replace this div
+          with: <img src="happy.png" class="companion-img" id="companionImg">
+          and swap images based on game state.
+        -->
+        <div id="companionDisplay">
+          <svg id="companionSVG" class="stick-placeholder" viewBox="0 0 80 100">
+            <circle cx="40" cy="18" r="14" fill="none" stroke="#00ff88" stroke-width="3" id="svgHead"/>
+            <line x1="40" y1="32" x2="40" y2="65" stroke="#00ff88" stroke-width="3"/>
+            <line id="leftArm" x1="40" y1="42" x2="20" y2="55" stroke="#00ff88" stroke-width="3"/>
+            <line id="rightArm" x1="40" y1="42" x2="60" y2="55" stroke="#00ff88" stroke-width="3"/>
+            <line x1="40" y1="65" x2="25" y2="88" stroke="#00ff88" stroke-width="3"/>
+            <line x1="40" y1="65" x2="55" y2="88" stroke="#00ff88" stroke-width="3"/>
+            <circle cx="34" cy="15" r="2" fill="#00ff88" id="leftEye"/>
+            <circle cx="46" cy="15" r="2" fill="#00ff88" id="rightEye"/>
+            <path id="mouth" d="M 33 23 Q 40 28 47 23" fill="none" stroke="#00ff88" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <div class="companion-name-tag" id="displayBuddyName">BUDDY</div>
+        <div class="companion-mood" id="buddyMood">waiting for you to learn something...</div>
+      </div>
+
+      <!-- Stats bars -->
+      <div class="stats-area">
+        <div class="stat-row">
+          <div class="stat-label">HUNGER</div>
+          <div class="pixel-bar">
+            <div class="pixel-bar-fill yellow" id="hungerBar" style="width: 70%"></div>
+          </div>
+          <div class="stat-value" id="hungerVal">70%</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label">XP</div>
+          <div class="pixel-bar">
+            <div class="pixel-bar-fill green" id="xpBar" style="width: 0%"></div>
+          </div>
+          <div class="stat-value" id="xpVal">0/100</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label">MOOD</div>
+          <div class="pixel-bar">
+            <div class="pixel-bar-fill pink" id="moodBar" style="width: 80%"></div>
+          </div>
+          <div class="stat-value" id="moodVal">😊</div>
+        </div>
+      </div>
+
+      <!-- Current task -->
+      <div class="current-task">
+        <div class="task-header">
+          <span>📋 CURRENT MISSION</span>
+          <span id="trackLabel" style="color: var(--pixel-yellow);">—</span>
+        </div>
+        <div class="task-text" id="currentTask">No mission active. Pick one below!</div>
+        <div class="task-deadline" id="taskDeadline"></div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-buttons">
+        <button class="action-btn" onclick="completeTask()">
+          ✅ TASK<br>DONE
+        </button>
+        <button class="action-btn yellow" onclick="showNewTask()">
+          📋 NEW<br>MISSION
+        </button>
+        <button class="action-btn" onclick="feedBuddy()">
+          🍕 FEED<br>BUDDY
+        </button>
+        <button class="action-btn danger" onclick="ragequit()">
+          😤 RAGE<br>QUIT
+        </button>
+      </div>
+
+      <!-- Badge wall -->
+      <div class="badge-section">
+        <div class="badge-header">🏆 BADGES</div>
+        <div class="badge-grid" id="badgeGrid">
+          <div class="badge" data-badge="first" title="First Task!">⭐</div>
+          <div class="badge" data-badge="streak3" title="3 Day Streak!">🔥</div>
+          <div class="badge" data-badge="streak7" title="7 Day Streak!">💎</div>
+          <div class="badge" data-badge="streak10" title="10 Day Streak!">👑</div>
+          <div class="badge" data-badge="tasks5" title="5 Tasks Done!">🎯</div>
+          <div class="badge" data-badge="tasks10" title="10 Tasks Done!">🚀</div>
+          <div class="badge" data-badge="level5" title="Level 5!">🌟</div>
+          <div class="badge" data-badge="cyber" title="Cyber Security Started!">🔐</div>
+        </div>
+      </div>
+
+    </div><!-- end dashboard -->
+
+  </div><!-- end screen -->
+
+  <!-- Physical-style buttons below screen -->
+  <div class="device-buttons">
+    <button class="d-btn red" onclick="showStats()" title="Stats">📊</button>
+    <button class="d-btn yellow" onclick="toggleTheme()" title="Theme">🎨</button>
+    <button class="d-btn green" onclick="showHelp()" title="Help">❓</button>
+  </div>
+
+</div><!-- end device -->
+
+<!-- Popup notification -->
+<div class="popup" id="popup"></div>
+
+<script>
+  /*
+    WHY JAVASCRIPT HERE AND NOT A SEPARATE FILE:
+    For a single-file app meant to be saved and opened anywhere,
+    keeping everything in one file means it works offline,
+    you can email it, put it on GitHub, share a link — 
+    no broken references to missing files.
+  */
+
+  // ==================
+  // GAME STATE
+  // WHY AN OBJECT: All our game data lives in one place.
+  // Easy to save, load, and pass around.
+  // ==================
+  let gameState = {
+    playerName: '',
+    buddyName: '',
+    track: '',
+    thmusername: '',
+    lastTHMRooms: 0,
+    unverifiedTasks: 0,
+    xp: 0,
+    level: 1,
+    streak: 0,
+    lastLoginDate: null,
+    hunger: 70,
+    mood: 80,
+    tasksCompleted: 0,
+    badges: [],
+    currentTask: null
+  };
+
+  // Tasks per learning track
+  // WHY AN OBJECT OF ARRAYS: Easy to add new tracks later.
+  // Just add a new key and array of tasks.
+  const tasks = {
+    '🔐 Cyber Security': [
+      'Complete TryHackMe: Intro to Cybersecurity (Room 1)',
+      'Complete TryHackMe: What is Networking?',
+      'Watch: "How HTTPS Works" - Fireship (12 min)',
+      'Complete TryHackMe: Linux Fundamentals Part 1',
+      'Research: What is a SQL Injection attack?',
+      'Complete TryHackMe: Web Fundamentals',
+      'Practice: Capture The Flag (CTF) beginner challenge',
+      'Read: OWASP Top 10 - pick ONE vulnerability and deep dive',
+    ],
+    '🐍 Python': [
+      'Install Python + VS Code - write Hello World',
+      'Learn: variables, strings, and print() - 30 min',
+      'Complete: Python for Everybody - Week 1 (Coursera free)',
+      'Build: a script that asks your name and greets you',
+      'Learn: if/else statements with a quiz script',
+      'Build: a simple calculator in Python',
+      'Learn: lists and loops - make a to-do list app',
+      'Build: a script that reads a CSV file and prints it',
+    ],
+    '🤖 AI & ML': [
+      'Watch: "But what IS a neural network?" - 3Blue1Brown',
+      'Read: How does ChatGPT actually work? (Anthropic blog)',
+      'Complete: Elements of AI - Chapter 1 (free course)',
+      'Experiment: Try 5 different Claude prompting techniques',
+      'Learn: What is RAG? (Retrieval Augmented Generation)',
+      'Watch: Andrej Karpathy - Intro to Large Language Models',
+      'Build: A Claude API call in JavaScript (basic)',
+      'Research: What is an embedding? Find 3 use cases.',
+    ],
+    '📊 Data Analytics': [
+      'Learn: What is a DataFrame? (Pandas basics)',
+      'Complete: Google Data Analytics Certificate - Week 1',
+      'Build: A pivot table in Google Sheets from dummy data',
+      'Learn: The difference between mean, median, and mode',
+      'Build: A chart in Excel that tells a story',
+      'Learn: What is a p-value? (stats basics)',
+      'Practice: Clean a messy CSV - remove duplicates, fix headers',
+      'Build: A simple dashboard in Google Sheets with slicers',
+    ],
+    '🌐 Web Dev': [
+      'Learn: HTML basics - build a simple webpage',
+      'Learn: CSS - style your webpage with colours and fonts',
+      'Complete: freeCodeCamp - Responsive Web Design (Day 1)',
+      'Build: A personal "about me" page in HTML/CSS',
+      'Learn: What is JavaScript? Variables and functions.',
+      'Build: A button that changes colour when clicked (JS)',
+      'Learn: How does the DOM work?',
+      'Build: A simple to-do list in HTML/CSS/JS',
+    ],
+    '🔎 Digital Forensics': [
+      'Learn: What is digital forensics? (Overview article)',
+      'Install: Autopsy forensic tool - open a sample image',
+      'Research: Chain of custody - why does it matter?',
+      'Complete: TryHackMe - Digital Forensics room',
+      'Learn: What is metadata? Extract EXIF from a photo',
+      'Research: What is steganography? Find a free tool.',
+      'Practice: Recover a "deleted" file from a disk image',
+      'Read: A real case study - how was a cybercriminal caught?',
+    ]
+  };
+
+  const buddyMoods = {
+    happy: [
+      "fed and ready to learn!",
+      "you got this!",
+      "let's hack the planet 🌍",
+      "brain cells: activated",
+      "today we learn, tomorrow we rule"
+    ],
+    hungry: [
+      "...feed me a completed task",
+      "i'm fading... learn something",
+      "it's been a while...",
+      "hello? anyone there?",
+    ],
+    excited: [
+      "YESSS YOU DID IT!!!",
+      "LOOK AT YOU GO!!!",
+      "THIS IS THE BEST DAY",
+      "I KNEW YOU COULD!!!"
+    ],
+    judging: [
+      "so... are we doing this or not",
+      "i'm not angry, just disappointed",
+      "the WiFi is right there...",
+      "TryHackMe.com. that's all i'm saying."
+    ]
+  };
+
+  // ==================
+  // SAVE / LOAD
+  // WHY LOCALSTORAGE: This is the browser's built-in storage.
+  // It saves data permanently on the device.
+  // Perfect for a phone app - data survives closing the browser.
+  // ==================
+  function saveGame() {
+    localStorage.setItem('studyBuddy', JSON.stringify(gameState));
+  }
+
+  function loadGame() {
+    const saved = localStorage.getItem('studyBuddy');
+    if (saved) {
+      gameState = JSON.parse(saved);
+      return true;
+    }
+    return false;
+  }
+
+  // ==================
+  // ONBOARDING NAVIGATION
+  // ==================
+  function goToScreen1() {
+    document.getElementById('screen1').classList.remove('hidden');
+    document.getElementById('screen2').classList.add('hidden');
+  }
+
+  function goToScreen2() {
+    const name = document.getElementById('userName').value.trim();
+    if (!name) {
+      showPopup("ENTER YOUR NAME FIRST!", 'error');
+      document.getElementById('userName').focus();
+      return;
+    }
+    gameState.playerName = name.toUpperCase();
+    document.getElementById('screen1').classList.add('hidden');
+    document.getElementById('screen2').classList.remove('hidden');
+  }
+
+  function goToScreen3() {
+    const buddyName = document.getElementById('buddyName').value.trim();
+    if (!buddyName) {
+      showPopup("NAME YOUR BUDDY!", 'error');
+      document.getElementById('buddyName').focus();
+      return;
+    }
+    gameState.buddyName = buddyName.toUpperCase();
+    document.getElementById('screen2').classList.add('hidden');
+    document.getElementById('screen3').classList.remove('hidden');
+  }
+
+  let selectedTrack = null;
+
+  function selectTrack(track, btn) {
+    selectedTrack = track;
+    gameState.track = track;
+    document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const startBtn = document.getElementById('startBtn');
+    startBtn.disabled = false;
+    startBtn.style.opacity = '1';
+  }
+
+  function startGame() {
+    if (!selectedTrack) return;
+    const thmUser = document.getElementById('thmUsername').value.trim();
+    if (thmUser) {
+      gameState.thmusername = thmUser.toLowerCase();
+    }
+    gameState.lastLoginDate = new Date().toDateString();
+    saveGame();
+    showDashboard();
+    launchConfetti();
+    showPopup(`WELCOME ${gameState.playerName}! LET'S GO! 🚀`);
+  }
+
+  // ==================
+  // DASHBOARD
+  // ==================
+  function showDashboard() {
+    document.getElementById('screen1').classList.add('hidden');
+    document.getElementById('screen2').classList.add('hidden');
+    document.getElementById('screen3').classList.add('hidden');
+    document.getElementById('dashboard').classList.add('active');
+    updateDisplay();
+    checkStreak();
+    setNewTask();
+  }
+
+  function updateDisplay() {
+    document.getElementById('displayPlayerName').textContent = gameState.playerName;
+    document.getElementById('displayBuddyName').textContent = gameState.buddyName;
+    document.getElementById('streakCount').textContent = gameState.streak;
+    document.getElementById('trackLabel').textContent = gameState.track.split(' ')[0];
+
+    // XP bar
+    const xpPercent = (gameState.xp % 100);
+    document.getElementById('xpBar').style.width = xpPercent + '%';
+    document.getElementById('xpVal').textContent = `${gameState.xp % 100}/100`;
+
+    // Hunger bar
+    document.getElementById('hungerBar').style.width = gameState.hunger + '%';
+    document.getElementById('hungerVal').textContent = gameState.hunger + '%';
+
+    // Mood bar
+    document.getElementById('moodBar').style.width = gameState.mood + '%';
+
+    // Update companion appearance based on state
+    updateCompanion();
+    updateBadges();
+  }
+
+  function updateCompanion() {
+    const svg = document.getElementById('companionSVG');
+    const mouth = document.getElementById('mouth');
+    const moodText = document.getElementById('buddyMood');
+    const leftEye = document.getElementById('leftEye');
+    const rightEye = document.getElementById('rightEye');
+    const svgHead = document.getElementById('svgHead');
+
+    if (gameState.hunger < 30 || gameState.mood < 30) {
+      // Sad
+      svgHead.setAttribute('stroke', '#ff4757');
+      mouth.setAttribute('d', 'M 33 26 Q 40 21 47 26');
+      leftEye.setAttribute('r', '2');
+      rightEye.setAttribute('r', '2');
+      moodText.textContent = getRandomMood('hungry');
+    } else if (gameState.mood > 80) {
+      // Happy
+      svgHead.setAttribute('stroke', '#00ff88');
+      mouth.setAttribute('d', 'M 33 23 Q 40 29 47 23');
+      leftEye.setAttribute('r', '2');
+      rightEye.setAttribute('r', '2');
+      moodText.textContent = getRandomMood('happy');
+    } else {
+      // Neutral
+      svgHead.setAttribute('stroke', '#ffd700');
+      mouth.setAttribute('d', 'M 33 24 Q 40 26 47 24');
+      moodText.textContent = getRandomMood('judging');
+    }
+  }
+
+  function getRandomMood(type) {
+    const moods = buddyMoods[type];
+    return moods[Math.floor(Math.random() * moods.length)];
+  }
+
+  // ==================
+  // TRYHACKME VERIFICATION
+  //
+  // WHY THIS EXISTS: You can't cheat XP anymore.
+  // When you click "Task Done" on a TryHackMe task,
+  // the app checks your PUBLIC profile and counts
+  // completed rooms. If the number went up since last
+  // time — you did the work. If not — no XP.
+  //
+  // WHY ALLORIGINS: Browsers have a security rule called
+  // CORS (Cross-Origin Resource Sharing) that stops pages
+  // from secretly reading other websites. allorigins.win
+  // is a free "proxy" — a middleman that fetches the page
+  // for us and hands it back. This is literally how
+  // many real tools work. First cybersecurity lesson: 
+  // proxies exist and matter.
+  // ==================
+
+  async function verifyTryHackMe() {
+    const username = gameState.thmusername;
+    if (!username) return null;
+
+    showPopup('🔍 CHECKING YOUR TRYHACKME PROGRESS...', 'warn');
+
+    try {
+      // WHY TEMPLATE LITERAL (backtick string):
+      // Lets us drop variables straight into a string
+      // with ${variable} — cleaner than joining strings
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://tryhackme.com/p/' + username)}`;
+
+      // WHY AWAIT: This is an "async" operation — the browser
+      // has to go fetch a webpage which takes time.
+      // await means "wait here until it comes back"
+      // instead of the code rushing ahead with no data.
+      const response = await fetch(proxyUrl);
+      const data = await response.json();
+      const html = data.contents;
+
+      // WHY REGEX: We're hunting for the completed rooms number
+      // inside a big blob of HTML text.
+      // The pattern looks for "completedRooms" followed by a number.
+      // Regex is a mini-language for finding patterns in text —
+      // ESSENTIAL skill in both coding and forensics.
+      const match = html.match(/completedRooms["\s:]+(\d+)/);
+      if (match) {
+        return parseInt(match[1]);
+      }
+
+      // Fallback: look for the number near "Completed rooms" text
+      const fallback = html.match(/Completed rooms[\s\S]{0,100}?(\d+)/);
+      if (fallback) {
+        return parseInt(fallback[1]);
+      }
+
+      return null;
+    } catch (error) {
+      console.log('THM check failed:', error);
+      return null;
+    }
+  }
+
+  // ==================
+  // GAME ACTIONS
+  // ==================
+  async function completeTask() {
+    // Check if this is a TryHackMe task that needs verification
+    const isTHMTask = gameState.track === '🔐 Cyber Security' && gameState.thmusername;
+
+    if (isTHMTask) {
+      // Verify against real TryHackMe data
+      showPopup('⏳ VERIFYING WITH TRYHACKME...', 'warn');
+      const currentRooms = await verifyTryHackMe();
+
+      if (currentRooms === null) {
+        // Couldn't fetch — give benefit of the doubt but warn
+        showPopup('⚠️ COULD NOT VERIFY. HONOUR SYSTEM ACTIVATED.', 'warn');
+        // Still continue but log it
+        gameState.unverifiedTasks = (gameState.unverifiedTasks || 0) + 1;
+      } else if (currentRooms <= (gameState.lastTHMRooms || 0)) {
+        // Room count hasn't gone up — caught!
+        document.getElementById('buddyMood').textContent = '...nice try though 👀';
+        showPopup(`${gameState.buddyName} SAYS: COMPLETE A ROOM FIRST. 👀`, 'error');
+
+        // Make buddy shake judgementally
+        const svg = document.getElementById('companionSVG');
+        svg.classList.add('shaking');
+        setTimeout(() => svg.classList.remove('shaking'), 1500);
+        return; // EXIT — no XP awarded
+      } else {
+        // VERIFIED! Room count went up!
+        const newRooms = currentRooms - (gameState.lastTHMRooms || 0);
+        gameState.lastTHMRooms = currentRooms;
+        showPopup(`✅ TRYHACKME VERIFIED! +${newRooms} ROOM${newRooms > 1 ? 'S' : ''}! 🔐`);
+      }
+    }
+
+    // If we get here — task is verified (or non-THM track)
+    // Award XP
+    const xpGain = isTHMTask ? 30 : 20; // Bonus XP for verified work!
+    gameState.xp += xpGain;
+    gameState.tasksCompleted++;
+    gameState.hunger = Math.min(100, gameState.hunger + 30);
+    gameState.mood = Math.min(100, gameState.mood + 20);
+
+    // Check level up
+    // WHY MATH.FLOOR: We want whole numbers only for levels.
+    // Level = 1 + how many complete sets of 100 XP you have
+    const newLevel = 1 + Math.floor(gameState.xp / 100);
+    if (newLevel > gameState.level) {
+      gameState.level = newLevel;
+      triggerLevelUp();
+    }
+
+    // Excited companion animation
+    const svg = document.getElementById('companionSVG');
+    svg.style.animation = 'none';
+    setTimeout(() => { svg.style.animation = ''; }, 10);
+    document.getElementById('buddyMood').textContent = getRandomMood('excited');
+
+    checkBadges();
+    setNewTask();
+    saveGame();
+    updateDisplay();
+    launchConfetti();
+    showPopup(`+${xpGain} XP! ${gameState.buddyName} IS PROUD! 🎉`);
+  }
+
+  function feedBuddy() {
+    if (gameState.hunger >= 100) {
+      showPopup(`${gameState.buddyName} IS ALREADY FULL!`, 'warn');
+      return;
+    }
+    gameState.hunger = Math.min(100, gameState.hunger + 20);
+    gameState.mood = Math.min(100, gameState.mood + 10);
+    saveGame();
+    updateDisplay();
+    showPopup(`${gameState.buddyName} SAYS THANKS! 🍕`);
+  }
+
+  function ragequit() {
+    gameState.mood = Math.max(0, gameState.mood - 15);
+    saveGame();
+    updateDisplay();
+    showPopup(`${gameState.buddyName} IS DISAPPOINTED. TRY AGAIN TOMORROW. 😤`, 'error');
+  }
+
+  function showNewTask() {
+    setNewTask();
+    showPopup('NEW MISSION ASSIGNED! 📋');
+  }
+
+  function setNewTask() {
+    const trackTasks = tasks[gameState.track] || tasks['🔐 Cyber Security'];
+    // Pick a random task from the current track
+    const task = trackTasks[Math.floor(Math.random() * trackTasks.length)];
+    gameState.currentTask = task;
+    document.getElementById('currentTask').textContent = task;
+
+    // Set a fake deadline (3 days from now)
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + 3);
+    document.getElementById('taskDeadline').textContent = 
+      `⏰ DUE: ${deadline.toDateString().toUpperCase()}`;
+    saveGame();
+  }
+
+  // ==================
+  // STREAK SYSTEM
+  // WHY THIS MATTERS: Streaks are the #1 retention mechanic in apps.
+  // Duolingo built an empire on this. Your AuDHD brain will NOT
+  // want to break a streak once it exists. That's the point.
+  // ==================
+  function checkStreak() {
+    const today = new Date().toDateString();
+    const lastLogin = gameState.lastLoginDate;
+
+    if (!lastLogin) {
+      gameState.streak = 1;
+      gameState.lastLoginDate = today;
+    } else if (lastLogin === today) {
+      // Same day - no change
+    } else {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (lastLogin === yesterday.toDateString()) {
+        // Consecutive day!
+        gameState.streak++;
+        gameState.lastLoginDate = today;
+        if (gameState.streak > 1) {
+          showPopup(`🔥 ${gameState.streak} DAY STREAK! KEEP GOING!`);
+        }
+      } else {
+        // Missed a day
+        gameState.streak = 1;
+        gameState.lastLoginDate = today;
+        showPopup(`STREAK RESET. START AGAIN. YOU GOT THIS. 💪`, 'warn');
+      }
+    }
+    saveGame();
+  }
+
+  // ==================
+  // BADGES
+  // WHY BADGES: External validation is for people who need others
+  // to see their trophies. Badges are for YOU. Private wins.
+  // ==================
+  function checkBadges() {
+    const newBadges = [];
+
+    if (gameState.tasksCompleted >= 1 && !gameState.badges.includes('first'))
+      newBadges.push('first');
+    if (gameState.streak >= 3 && !gameState.badges.includes('streak3'))
+      newBadges.push('streak3');
+    if (gameState.streak >= 7 && !gameState.badges.includes('streak7'))
+      newBadges.push('streak7');
+    if (gameState.streak >= 10 && !gameState.badges.includes('streak10'))
+      newBadges.push('streak10');
+    if (gameState.tasksCompleted >= 5 && !gameState.badges.includes('tasks5'))
+      newBadges.push('tasks5');
+    if (gameState.tasksCompleted >= 10 && !gameState.badges.includes('tasks10'))
+      newBadges.push('tasks10');
+    if (gameState.level >= 5 && !gameState.badges.includes('level5'))
+      newBadges.push('level5');
+    if (gameState.track.includes('Cyber') && !gameState.badges.includes('cyber'))
+      newBadges.push('cyber');
+
+    newBadges.forEach(badge => {
+      gameState.badges.push(badge);
+      setTimeout(() => showPopup(`🏆 BADGE UNLOCKED: ${badge.toUpperCase()}!`), 1000);
+    });
+  }
+
+  function updateBadges() {
+    document.querySelectorAll('.badge').forEach(badge => {
+      if (gameState.badges.includes(badge.dataset.badge)) {
+        badge.classList.add('unlocked');
+      }
+    });
+  }
+
+  // ==================
+  // LEVEL UP
+  // ==================
+  function triggerLevelUp() {
+    const flash = document.getElementById('levelFlash');
+    flash.style.display = 'flex';
+    flash.textContent = `LEVEL ${gameState.level}!`;
+    launchConfetti();
+    setTimeout(() => { flash.style.display = 'none'; }, 2000);
+    showPopup(`⭐ LEVEL ${gameState.level}! ${gameState.buddyName} EVOLVED!`);
+  }
+
+  // ==================
+  // CONFETTI
+  // WHY: Because when you complete something hard,
+  // your brain deserves a dopamine hit. Non-negotiable.
+  // ==================
+  function launchConfetti() {
+    const container = document.getElementById('confettiContainer');
+    const colours = ['#00ff88', '#ffd700', '#ff6b9d', '#00d4ff', '#ff4757'];
+
+    for (let i = 0; i < 30; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colours[Math.floor(Math.random() * colours.length)];
+      piece.style.animationDelay = Math.random() * 0.5 + 's';
+      piece.style.animationDuration = (1 + Math.random()) + 's';
+      container.appendChild(piece);
+      setTimeout(() => piece.remove(), 2500);
+    }
+  }
+
+  // ==================
+  // POPUP NOTIFICATION
+  // ==================
+  function showPopup(message, type = 'success') {
+    const popup = document.getElementById('popup');
+    popup.textContent = message;
+    popup.style.borderColor = type === 'error' ? '#ff4757' : 
+                              type === 'warn' ? '#ffd700' : '#00ff88';
+    popup.style.color = type === 'error' ? '#ff4757' : 
+                        type === 'warn' ? '#ffd700' : '#00ff88';
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 3000);
+  }
+
+  // ==================
+  // DEVICE BUTTONS
+  // ==================
+  function showStats() {
+    showPopup(`LVL ${gameState.level} | ${gameState.tasksCompleted} TASKS | ${gameState.xp} XP TOTAL`);
+  }
+
+  function toggleTheme() {
+    showPopup('MORE THEMES COMING IN V2! 🎨');
+  }
+
+  function showHelp() {
+    showPopup('COMPLETE TASKS TO FEED BUDDY. DAILY STREAK = POWER. DON\'T LET BUDDY DIE.');
+  }
+
+  // ==================
+  // HUNGER DECAY
+  // WHY: This is the Tamagotchi mechanic. Buddy gets hungry
+  // over time. You HAVE to come back or they suffer.
+  // We check every 30 minutes if the app is open.
+  // ==================
+  function startHungerDecay() {
+    setInterval(() => {
+      if (gameState.hunger > 0) {
+        gameState.hunger = Math.max(0, gameState.hunger - 2);
+        gameState.mood = Math.max(0, gameState.mood - 1);
+        saveGame();
+        updateDisplay();
+        if (gameState.hunger < 20) {
+          showPopup(`${gameState.buddyName} IS STARVING! COMPLETE A TASK! 😱`, 'error');
+        }
+      }
+    }, 1800000); // Every 30 minutes
+  }
+
+  // ==================
+  // ENTER KEY SUPPORT
+  // Small UX detail - pressing Enter works like clicking Next
+  // ==================
+  document.getElementById('userName').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') goToScreen2();
+  });
+  document.getElementById('buddyName').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') goToScreen3();
+  });
+
+  // ==================
+  // INIT - runs when page loads
+  // ==================
+  window.onload = function() {
+    // Try to load saved game first
+    if (loadGame() && gameState.playerName) {
+      // Returning player - go straight to dashboard
+      showDashboard();
+      showPopup(`WELCOME BACK ${gameState.playerName}! 👋`);
+    }
+    // Otherwise show screen 1 (already visible by default)
+    startHungerDecay();
+  };
+</script>
+</body>
+</html>
