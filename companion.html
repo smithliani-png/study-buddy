@@ -1050,11 +1050,13 @@
     document.getElementById('dashboard').classList.add('active');
     updateDisplay();
     checkStreak();
-    setNewTask();function openMission() {
-  if (gameState.track === '🔐 Cyber Security') {
-    window.open('https://tryhackme.com/dashboard', '_blank');
+  setNewTask();
   }
-}
+
+  function openMission() {
+    if (gameState.track === '🔐 Cyber Security') {
+      window.open('https://tryhackme.com/dashboard', '_blank');
+    }
   }
 
   function updateDisplay() {
