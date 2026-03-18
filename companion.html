@@ -787,7 +787,7 @@
           <span>📋 CURRENT MISSION</span>
           <span id="trackLabel" style="color: var(--pixel-yellow);">—</span>
         </div>
-        <div class="task-text" id="currentTask">No mission active. Pick one below!</div>
+        <div class="task-text" id="currentTask" onclick="openMission()" style="cursor:pointer;">No mission active. Pick one below!</div>
         <div class="task-deadline" id="taskDeadline"></div>
       </div>
 
@@ -1050,7 +1050,11 @@
     document.getElementById('dashboard').classList.add('active');
     updateDisplay();
     checkStreak();
-    setNewTask();
+    setNewTask();function openMission() {
+  if (gameState.track === '🔐 Cyber Security') {
+    window.open('https://tryhackme.com/dashboard', '_blank');
+  }
+}
   }
 
   function updateDisplay() {
