@@ -832,6 +832,38 @@
 
 <!-- Popup notification -->
 <div class="popup" id="popup"></div>
+<!-- ==================
+     QUIZ MODAL
+     WHY A MODAL: It appears ON TOP of everything else.
+     The user can't do anything else until they answer.
+     That's the gate. No quiz = no XP.
+     ================== -->
+<div class="quiz-overlay" id="quizOverlay">
+  <div class="quiz-box">
+    
+    <div class="quiz-progress" id="quizProgress">
+      QUESTION 1 OF 3
+    </div>
+
+    <div class="quiz-question" id="quizQuestion">
+      Question goes here
+    </div>
+
+    <div class="quiz-options" id="quizOptions">
+      <button class="quiz-btn" onclick="checkAnswer(0)">A. Option 1</button>
+      <button class="quiz-btn" onclick="checkAnswer(1)">B. Option 2</button>
+      <button class="quiz-btn" onclick="checkAnswer(2)">C. Option 3</button>
+      <button class="quiz-btn" onclick="checkAnswer(3)">D. Option 4</button>
+    </div>
+
+    <div class="quiz-feedback" id="quizFeedback"></div>
+
+    <button class="quiz-hint-btn" id="hintBtn" onclick="useHint()">
+      💡 ASK BOB (-5 XP)
+    </button>
+
+  </div>
+</div>
 
 <script>
   /*
