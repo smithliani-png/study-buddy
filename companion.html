@@ -739,17 +739,12 @@
           and swap images based on game state.
         -->
         <div id="companionDisplay">
-          <svg id="companionSVG" class="stick-placeholder" viewBox="0 0 80 100">
-            <circle cx="40" cy="18" r="14" fill="none" stroke="#00ff88" stroke-width="3" id="svgHead"/>
-            <line x1="40" y1="32" x2="40" y2="65" stroke="#00ff88" stroke-width="3"/>
-            <line id="leftArm" x1="40" y1="42" x2="20" y2="55" stroke="#00ff88" stroke-width="3"/>
-            <line id="rightArm" x1="40" y1="42" x2="60" y2="55" stroke="#00ff88" stroke-width="3"/>
-            <line x1="40" y1="65" x2="25" y2="88" stroke="#00ff88" stroke-width="3"/>
-            <line x1="40" y1="65" x2="55" y2="88" stroke="#00ff88" stroke-width="3"/>
-            <circle cx="34" cy="15" r="2" fill="#00ff88" id="leftEye"/>
-            <circle cx="46" cy="15" r="2" fill="#00ff88" id="rightEye"/>
-            <path id="mouth" d="M 33 23 Q 40 28 47 23" fill="none" stroke="#00ff88" stroke-width="2"/>
-          </svg>
+          <!-- 
+            WHY IMG TAG: We're now using your real PNG illustrations.
+            filter: invert(1) flips black to white on our dark background.
+            The src swaps based on game state using setBobImage().
+          -->
+          <img src="22.png" class="companion-img" id="companionImg" alt="Bob">
         </div>
 
         <div class="companion-name-tag" id="displayBuddyName">BUDDY</div>
@@ -787,7 +782,7 @@
           <span>📋 CURRENT MISSION</span>
           <span id="trackLabel" style="color: var(--pixel-yellow);">—</span>
         </div>
-        <div class="task-text" id="currentTask" onclick="openMission()" style="cursor:pointer;">No mission active. Pick one below!</div>
+        <div class="task-text" id="currentTask">No mission active. Pick one below!</div>
         <div class="task-deadline" id="taskDeadline"></div>
       </div>
 
@@ -1050,13 +1045,7 @@
     document.getElementById('dashboard').classList.add('active');
     updateDisplay();
     checkStreak();
-  setNewTask();
-  }
-
-  function openMission() {
-    if (gameState.track === '🔐 Cyber Security') {
-      window.open('https://tryhackme.com/dashboard', '_blank');
-    }
+    setNewTask();
   }
 
   function updateDisplay() {
@@ -1082,32 +1071,88 @@
     updateBadges();
   }
 
+  // ==================
+  // BOB IMAGE SYSTEM
+  // WHY A LOOKUP OBJECT: Each state maps to a PNG filename.
+  // Easy to add new states later — just add a line here.
+  // ==================
+  const bobImages = {
+    // Default happy states — rotated randomly
+    happy: ['22.png', '23.png', '24.png', '25.png'],
+    // Task completed / verified
+    taskDone: '15.png',       // "Look at you... you did it!"
+    goodJob: '3.png',         // "Good job bud"
+    knowsAnswer: '2.png',     // "Look at you knowing the answer"
+    motivation: '4.png',      // "You can do it"
+    // Hunger states
+    gettingHungry: '18.png',  // Fridge Bob
+    disappointed: '26.png',   // "Not mad just disappointed" (50%)
+    starving: '19.png',       // Plate and cutlery Bob
+    giveUp: '28.png',         // "I guess this is who we are now" (<30%)
+    // Streak
+    streakWarning: '16.png',  // Running Bob
+    streakLost: '17.png',     // Crying Bob
+    // Level up
+    levelUp: '5.png',         // "Like a boss"
+    // Cheating / wrong
+    cheating: '7.png',        // "WTF... Try again"
+    wtf: '8.png',             // "For the love of all things"
+    // Holiday
+    holiday: '9.png',         // Beach Bob
+    postHoliday: '10.png',    // Coffee Bob
+    // Time warning
+    timeWarning: '11.png',    // "STOP IMMEDIATELY"
+    // Confusion / help
+    confused: '1.png',        // "Do you need some help?"
+    clue: '14.png',           // Holding lightbulb
+    reread: '12.png',         // Reading Bob
+    youSuck: '13.png',        // "You suck but trying"
+    tellMeMore: '6.png',      // Curious lean-in
+    // Greetings
+    hello: '20.png',          // "Hello there"
+    bye: '21.png',            // "Okay bye then"
+    sarcastic: '24.png',      // "Can I interest you in a sarcastic comment"
+  };
+
+  function setBobImage(state) {
+    const img = document.getElementById('companionImg');
+    if (!img) return;
+    
+    // WHY ARRAY CHECK: Happy state rotates between 4 images randomly
+    const src = Array.isArray(bobImages[state]) 
+      ? bobImages[state][Math.floor(Math.random() * bobImages[state].length)]
+      : bobImages[state];
+    
+    if (src) {
+      img.src = src;
+      // Reset animation so it replays on image change
+      img.style.animation = 'none';
+      setTimeout(() => { img.style.animation = ''; }, 10);
+    }
+  }
+
   function updateCompanion() {
-    const svg = document.getElementById('companionSVG');
-    const mouth = document.getElementById('mouth');
     const moodText = document.getElementById('buddyMood');
-    const leftEye = document.getElementById('leftEye');
-    const rightEye = document.getElementById('rightEye');
-    const svgHead = document.getElementById('svgHead');
 
     if (gameState.hunger < 30 || gameState.mood < 30) {
-      // Sad
-      svgHead.setAttribute('stroke', '#ff4757');
-      mouth.setAttribute('d', 'M 33 26 Q 40 21 47 26');
-      leftEye.setAttribute('r', '2');
-      rightEye.setAttribute('r', '2');
+      // Below 30% — giving up
+      setBobImage('giveUp');
+      moodText.textContent = "i guess this is who we are now...";
+    } else if (gameState.hunger < 50 || gameState.mood < 50) {
+      // 30-50% — disappointed
+      setBobImage('disappointed');
       moodText.textContent = getRandomMood('hungry');
-    } else if (gameState.mood > 80) {
-      // Happy
-      svgHead.setAttribute('stroke', '#00ff88');
-      mouth.setAttribute('d', 'M 33 23 Q 40 29 47 23');
-      leftEye.setAttribute('r', '2');
-      rightEye.setAttribute('r', '2');
+    } else if (gameState.hunger < 70) {
+      // Getting hungry — fridge Bob
+      setBobImage('gettingHungry');
+      moodText.textContent = "there's nothing here... learn something";
+    } else if (gameState.mood > 80 && gameState.hunger > 70) {
+      // Happy and well fed — rotate through happy Bobs
+      setBobImage('happy');
       moodText.textContent = getRandomMood('happy');
     } else {
-      // Neutral
-      svgHead.setAttribute('stroke', '#ffd700');
-      mouth.setAttribute('d', 'M 33 24 Q 40 26 47 24');
+      // Neutral — sarcastic/judging
+      setBobImage('sarcastic');
       moodText.textContent = getRandomMood('judging');
     }
   }
@@ -1199,11 +1244,7 @@
         // Room count hasn't gone up — caught!
         document.getElementById('buddyMood').textContent = '...nice try though 👀';
         showPopup(`${gameState.buddyName} SAYS: COMPLETE A ROOM FIRST. 👀`, 'error');
-
-        // Make buddy shake judgementally
-        const svg = document.getElementById('companionSVG');
-        svg.classList.add('shaking');
-        setTimeout(() => svg.classList.remove('shaking'), 1500);
+        setBobImage('cheating');
         return; // EXIT — no XP awarded
       } else {
         // VERIFIED! Room count went up!
@@ -1231,9 +1272,7 @@
     }
 
     // Excited companion animation
-    const svg = document.getElementById('companionSVG');
-    svg.style.animation = 'none';
-    setTimeout(() => { svg.style.animation = ''; }, 10);
+    setBobImage('taskDone');
     document.getElementById('buddyMood').textContent = getRandomMood('excited');
 
     checkBadges();
@@ -1312,6 +1351,7 @@
         // Missed a day
         gameState.streak = 1;
         gameState.lastLoginDate = today;
+        setBobImage('streakLost');
         showPopup(`STREAK RESET. START AGAIN. YOU GOT THIS. 💪`, 'warn');
       }
     }
@@ -1364,6 +1404,7 @@
     const flash = document.getElementById('levelFlash');
     flash.style.display = 'flex';
     flash.textContent = `LEVEL ${gameState.level}!`;
+    setBobImage('levelUp');
     launchConfetti();
     setTimeout(() => { flash.style.display = 'none'; }, 2000);
     showPopup(`⭐ LEVEL ${gameState.level}! ${gameState.buddyName} EVOLVED!`);
@@ -1433,6 +1474,7 @@
         saveGame();
         updateDisplay();
         if (gameState.hunger < 20) {
+          setBobImage('streakWarning');
           showPopup(`${gameState.buddyName} IS STARVING! COMPLETE A TASK! 😱`, 'error');
         }
       }
