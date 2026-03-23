@@ -1307,8 +1307,20 @@
     loadTrackerData();
   }
 
+  // Course URL map — when gviz can't read the hyperlink formula, use this
+  function getCourseUrl(course) {
+    const urls = {
+      'Jamf 100': 'https://learn.jamf.com/en-US/bundle/jamf-100-course-current/page/Welcome.html',
+      'Jamf 200': 'https://learn.jamf.com/en-US/bundle/jamf-200-course-current/page/Welcome.html',
+      'TryHackMe': 'https://tryhackme.com',
+      'HackerRank': 'https://hackerrank.com',
+      'Google Workspace Admin': 'https://cloud.google.com/learn/certification/associate-google-workspace-administrator',
+    };
+    return urls[course] || 'https://learn.jamf.com/en-US/bundle/jamf-100-course-current/page/Welcome.html';
+  }
+
   // Current lesson URL — set by loadTrackerData
-  let currentLessonUrl = 'https://learn.jamf.com';
+  let currentLessonUrl = 'https://learn.jamf.com/en-US/bundle/jamf-100-course-current/page/Welcome.html';
 
   function goToCurrentLesson() {
     window.open(currentLessonUrl, '_blank');
@@ -1527,6 +1539,10 @@
         totalXP += xp;
         if (status === 'Complete' || status === 'Mastered') completedCount++;
         if (!currentLesson && (status === 'In Progress' || status === 'Unlocked')) {
+          // Column G contains a HYPERLINK formula — gviz returns display text not URL
+          // So we use a hardcoded URL map based on course, falling back to jamf 100
+          const rawUrl = cells[6] ? (cells[6].v || '') : '';
+          const lessonUrl = rawUrl.startsWith('http') ? rawUrl : getCourseUrl(cells[1] ? cells[1].v : '');
           currentLesson = {
             building: cells[0] ? cells[0].v : '',
             course:   cells[1] ? cells[1].v : '',
@@ -1534,7 +1550,7 @@
             num:      cells[3] ? cells[3].v : 0,
             name:     cells[4] ? cells[4].v : '',
             skills:   cells[5] ? cells[5].v : '',
-            url:      cells[6] ? cells[6].v : 'https://learn.jamf.com',
+            url:      lessonUrl,
             estMins:  cells[7] ? cells[7].v : 0,
             status:   status,
           };
