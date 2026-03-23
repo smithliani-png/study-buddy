@@ -1308,22 +1308,25 @@
   }
 
   // Course URL map — when gviz can't read the hyperlink formula, use this
-  function getCourseUrl(course) {
+  function getCourseUrl(course, lessonNum) {
+    if (course === 'Jamf 100') {
+      if (lessonNum === 25) return 'https://training.jamf.com';
+      return `https://learn.jamf.com/r/en-US/jamf-100-course-current/Lesson_${lessonNum || 0}`;
+    }
     const urls = {
-      'Jamf 100': 'https://learn.jamf.com/en-US/bundle/jamf-100-course-current/page/Welcome.html',
       'Jamf 200': 'https://learn.jamf.com/en-US/bundle/jamf-200-course-current/page/Welcome.html',
       'TryHackMe': 'https://tryhackme.com',
       'HackerRank': 'https://hackerrank.com',
       'Google Workspace Admin': 'https://cloud.google.com/learn/certification/associate-google-workspace-administrator',
     };
-    return urls[course] || 'https://learn.jamf.com/en-US/bundle/jamf-100-course-current/page/Welcome.html';
+    return urls[course] || 'https://learn.jamf.com';
   }
 
   // Current lesson URL — set by loadTrackerData
   let currentLessonUrl = 'https://learn.jamf.com/en-US/bundle/jamf-100-course-current/page/Welcome.html';
 
   function openTrackerSheet() {
-    window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=443417633`, '_blank');
+    window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=80692022`, '_blank');
   }
 
   function goToCurrentLesson() {
@@ -1546,7 +1549,8 @@
           // Column G contains a HYPERLINK formula — gviz returns display text not URL
           // So we use a hardcoded URL map based on course, falling back to jamf 100
           const rawUrl = cells[6] ? (cells[6].v || '') : '';
-          const lessonUrl = rawUrl.startsWith('http') ? rawUrl : getCourseUrl(cells[1] ? cells[1].v : '');
+          const lessonNum = cells[3] ? cells[3].v : 0;
+          const lessonUrl = rawUrl.startsWith('http') ? rawUrl : getCourseUrl(cells[1] ? cells[1].v : '', lessonNum);
           currentLesson = {
             building: cells[0] ? cells[0].v : '',
             course:   cells[1] ? cells[1].v : '',
