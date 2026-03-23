@@ -1322,6 +1322,10 @@
   // Current lesson URL — set by loadTrackerData
   let currentLessonUrl = 'https://learn.jamf.com/en-US/bundle/jamf-100-course-current/page/Welcome.html';
 
+  function openTrackerSheet() {
+    window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=1912637392`, '_blank');
+  }
+
   function goToCurrentLesson() {
     window.open(currentLessonUrl, '_blank');
     showPopup('OPENING LESSON! COME BACK AND TICK THE BOXES. 💪');
@@ -1607,8 +1611,8 @@
        <div class="tracker-progress">${completed}/${total} LESSONS DONE · ${pct}% THROUGH COURSE
          <div class="tracker-progress-bar"><div class="tracker-progress-fill" style="width:${pct}%"></div></div>
        </div>
-       `<button class="tracker-btn" onclick="goToCurrentLesson()">▶ OPEN LESSON ON JAMF LEARN</button>`
-       <button class="tracker-btn secondary" onclick="window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=1912637392`,'_blank')">📊 OPEN TRACKER SHEET</button>
+       <button class="tracker-btn" onclick="goToCurrentLesson()">▶ OPEN LESSON ON JAMF LEARN</button>
+       <button class="tracker-btn secondary" onclick="openTrackerSheet()">📊 OPEN TRACKER SHEET</button>
        <button class="tracker-btn secondary" onclick="loadTrackerData()">↻ REFRESH</button>`;
   }
 
