@@ -1309,10 +1309,11 @@
 
   // Course URL map — when gviz can't read the hyperlink formula, use this
   function getCourseUrl(course, lessonNum) {
+    const num = parseInt(lessonNum);
     if (course === 'Jamf 100') {
-      if (lessonNum === 25) return 'https://training.jamf.com';
-      if (lessonNum === 0) return 'https://learn.jamf.com/r/en-US/jamf-100-course-current/Welcome';
-      return `https://learn.jamf.com/r/en-US/jamf-100-course-current/Lesson_${lessonNum}`;
+      if (num === 25) return 'https://training.jamf.com';
+      if (num === 0) return 'https://learn.jamf.com/r/en-US/jamf-100-course-current/Welcome';
+      return `https://learn.jamf.com/r/en-US/jamf-100-course-current/Lesson_${num}`;
     }
     const urls = {
       'Jamf 200': 'https://learn.jamf.com/en-US/bundle/jamf-200-course-current/page/Welcome.html',
