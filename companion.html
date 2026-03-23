@@ -1607,7 +1607,7 @@
        <div class="tracker-progress">${completed}/${total} LESSONS DONE · ${pct}% THROUGH COURSE
          <div class="tracker-progress-bar"><div class="tracker-progress-fill" style="width:${pct}%"></div></div>
        </div>
-       <button class="tracker-btn" onclick="goToCurrentLesson()">▶ GO TO LESSON → ${lesson.url ? lesson.url.replace('https://','') : 'learn.jamf.com'}</button>
+       `<button class="tracker-btn" onclick="goToCurrentLesson()">▶ OPEN LESSON ON JAMF LEARN</button>`
        <button class="tracker-btn secondary" onclick="window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=1912637392`,'_blank')">📊 OPEN TRACKER SHEET</button>
        <button class="tracker-btn secondary" onclick="loadTrackerData()">↻ REFRESH</button>`;
   }
