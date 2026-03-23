@@ -615,6 +615,36 @@
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--dark); }
   ::-webkit-scrollbar-thumb { background: var(--pixel-green); }
+
+  .tracker-panel {
+    background: linear-gradient(135deg, #0a1628, #0f2244);
+    border: 2px solid var(--pixel-blue);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 8px 0;
+    box-shadow: 0 0 12px rgba(0,212,255,0.15);
+  }
+  .tracker-header {
+    font-size: 7px;
+    color: var(--pixel-blue);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tracker-xp { color: var(--pixel-yellow); font-size: 6px; }
+  .tracker-lesson { font-size: 6px; color: var(--white); line-height: 1.8; margin-bottom: 8px; }
+  .lesson-name { color: var(--pixel-green); font-size: 7px; display: block; margin-bottom: 4px; }
+  .lesson-section { color: var(--grey); font-size: 5px; display: block; margin-bottom: 6px; }
+  .tracker-progress { font-size: 5px; color: var(--grey); margin-bottom: 8px; }
+  .tracker-progress-bar { height: 6px; background: var(--dark); border: 1px solid var(--pixel-blue); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  .tracker-progress-fill { height: 100%; background: var(--pixel-blue); transition: width 0.5s ease; }
+  .tracker-btn { display: block; width: 100%; background: var(--pixel-blue); color: var(--dark); border: none; border-radius: 4px; padding: 7px; font-family: 'Press Start 2P', monospace; font-size: 6px; cursor: pointer; margin-bottom: 4px; transition: opacity 0.2s; }
+  .tracker-btn:hover { opacity: 0.85; }
+  .tracker-btn.done-btn { background: var(--pixel-green); }
+  .tracker-btn.secondary { background: transparent; color: var(--pixel-blue); border: 1px solid var(--pixel-blue); }
+  .tracker-loading { font-size: 6px; color: var(--grey); text-align: center; padding: 10px 0; animation: blink 1s infinite; }
+  .tracker-error { font-size: 5px; color: var(--pixel-red); text-align: center; padding: 8px 0; line-height: 2; }
 </style>
 </head>
 <body>
@@ -739,12 +769,17 @@
           and swap images based on game state.
         -->
         <div id="companionDisplay">
-          <!-- 
-            WHY IMG TAG: We're now using your real PNG illustrations.
-            filter: invert(1) flips black to white on our dark background.
-            The src swaps based on game state using setBobImage().
-          -->
-          <img src="22.png" class="companion-img" id="companionImg" alt="Bob">
+          <svg id="companionSVG" class="stick-placeholder" viewBox="0 0 80 100">
+            <circle cx="40" cy="18" r="14" fill="none" stroke="#00ff88" stroke-width="3" id="svgHead"/>
+            <line x1="40" y1="32" x2="40" y2="65" stroke="#00ff88" stroke-width="3"/>
+            <line id="leftArm" x1="40" y1="42" x2="20" y2="55" stroke="#00ff88" stroke-width="3"/>
+            <line id="rightArm" x1="40" y1="42" x2="60" y2="55" stroke="#00ff88" stroke-width="3"/>
+            <line x1="40" y1="65" x2="25" y2="88" stroke="#00ff88" stroke-width="3"/>
+            <line x1="40" y1="65" x2="55" y2="88" stroke="#00ff88" stroke-width="3"/>
+            <circle cx="34" cy="15" r="2" fill="#00ff88" id="leftEye"/>
+            <circle cx="46" cy="15" r="2" fill="#00ff88" id="rightEye"/>
+            <path id="mouth" d="M 33 23 Q 40 28 47 23" fill="none" stroke="#00ff88" stroke-width="2"/>
+          </svg>
         </div>
 
         <div class="companion-name-tag" id="displayBuddyName">BUDDY</div>
@@ -788,7 +823,7 @@
 
       <!-- Action buttons -->
       <div class="action-buttons">
-        <button class="action-btn" onclick="showQuiz()">
+        <button class="action-btn" onclick="completeTask()">
           ✅ TASK<br>DONE
         </button>
         <button class="action-btn yellow" onclick="showNewTask()">
@@ -800,6 +835,15 @@
         <button class="action-btn danger" onclick="ragequit()">
           😤 RAGE<br>QUIT
         </button>
+      </div>
+
+      <!-- TRACKER PANEL -->
+      <div class="tracker-panel" id="trackerPanel">
+        <div class="tracker-header">
+          U0001F3AE BUDDY WORLD TRACKER
+          <span class="tracker-xp" id="trackerXP">XP: loading...</span>
+        </div>
+        <div id="trackerContent"><div class="tracker-loading">CONNECTING TO TRACKER...</div></div>
       </div>
 
       <!-- Badge wall -->
@@ -832,38 +876,6 @@
 
 <!-- Popup notification -->
 <div class="popup" id="popup"></div>
-<!-- ==================
-     QUIZ MODAL
-     WHY A MODAL: It appears ON TOP of everything else.
-     The user can't do anything else until they answer.
-     That's the gate. No quiz = no XP.
-     ================== -->
-<div class="quiz-overlay" id="quizOverlay">
-  <div class="quiz-box">
-    
-    <div class="quiz-progress" id="quizProgress">
-      QUESTION 1 OF 3
-    </div>
-
-    <div class="quiz-question" id="quizQuestion">
-      Question goes here
-    </div>
-
-    <div class="quiz-options" id="quizOptions">
-      <button class="quiz-btn" onclick="checkAnswer(0)">A. Option 1</button>
-      <button class="quiz-btn" onclick="checkAnswer(1)">B. Option 2</button>
-      <button class="quiz-btn" onclick="checkAnswer(2)">C. Option 3</button>
-      <button class="quiz-btn" onclick="checkAnswer(3)">D. Option 4</button>
-    </div>
-
-    <div class="quiz-feedback" id="quizFeedback"></div>
-
-    <button class="quiz-hint-btn" id="hintBtn" onclick="useHint()">
-      💡 ASK BOB (-5 XP)
-    </button>
-
-  </div>
-</div>
 
 <script>
   /*
@@ -1103,88 +1115,32 @@
     updateBadges();
   }
 
-  // ==================
-  // BOB IMAGE SYSTEM
-  // WHY A LOOKUP OBJECT: Each state maps to a PNG filename.
-  // Easy to add new states later — just add a line here.
-  // ==================
-  const bobImages = {
-    // Default happy states — rotated randomly
-    happy: ['22.png', '23.png', '24.png', '25.png'],
-    // Task completed / verified
-    taskDone: '15.png',       // "Look at you... you did it!"
-    goodJob: '3.png',         // "Good job bud"
-    knowsAnswer: '2.png',     // "Look at you knowing the answer"
-    motivation: '4.png',      // "You can do it"
-    // Hunger states
-    gettingHungry: '18.png',  // Fridge Bob
-    disappointed: '26.png',   // "Not mad just disappointed" (50%)
-    starving: '19.png',       // Plate and cutlery Bob
-    giveUp: '28.png',         // "I guess this is who we are now" (<30%)
-    // Streak
-    streakWarning: '16.png',  // Running Bob
-    streakLost: '17.png',     // Crying Bob
-    // Level up
-    levelUp: '5.png',         // "Like a boss"
-    // Cheating / wrong
-    cheating: '7.png',        // "WTF... Try again"
-    wtf: '8.png',             // "For the love of all things"
-    // Holiday
-    holiday: '9.png',         // Beach Bob
-    postHoliday: '10.png',    // Coffee Bob
-    // Time warning
-    timeWarning: '11.png',    // "STOP IMMEDIATELY"
-    // Confusion / help
-    confused: '1.png',        // "Do you need some help?"
-    clue: '14.png',           // Holding lightbulb
-    reread: '12.png',         // Reading Bob
-    youSuck: '13.png',        // "You suck but trying"
-    tellMeMore: '6.png',      // Curious lean-in
-    // Greetings
-    hello: '20.png',          // "Hello there"
-    bye: '21.png',            // "Okay bye then"
-    sarcastic: '24.png',      // "Can I interest you in a sarcastic comment"
-  };
-
-  function setBobImage(state) {
-    const img = document.getElementById('companionImg');
-    if (!img) return;
-    
-    // WHY ARRAY CHECK: Happy state rotates between 4 images randomly
-    const src = Array.isArray(bobImages[state]) 
-      ? bobImages[state][Math.floor(Math.random() * bobImages[state].length)]
-      : bobImages[state];
-    
-    if (src) {
-      img.src = src;
-      // Reset animation so it replays on image change
-      img.style.animation = 'none';
-      setTimeout(() => { img.style.animation = ''; }, 10);
-    }
-  }
-
   function updateCompanion() {
+    const svg = document.getElementById('companionSVG');
+    const mouth = document.getElementById('mouth');
     const moodText = document.getElementById('buddyMood');
+    const leftEye = document.getElementById('leftEye');
+    const rightEye = document.getElementById('rightEye');
+    const svgHead = document.getElementById('svgHead');
 
     if (gameState.hunger < 30 || gameState.mood < 30) {
-      // Below 30% — giving up
-      setBobImage('giveUp');
-      moodText.textContent = "i guess this is who we are now...";
-    } else if (gameState.hunger < 50 || gameState.mood < 50) {
-      // 30-50% — disappointed
-      setBobImage('disappointed');
+      // Sad
+      svgHead.setAttribute('stroke', '#ff4757');
+      mouth.setAttribute('d', 'M 33 26 Q 40 21 47 26');
+      leftEye.setAttribute('r', '2');
+      rightEye.setAttribute('r', '2');
       moodText.textContent = getRandomMood('hungry');
-    } else if (gameState.hunger < 70) {
-      // Getting hungry — fridge Bob
-      setBobImage('gettingHungry');
-      moodText.textContent = "there's nothing here... learn something";
-    } else if (gameState.mood > 80 && gameState.hunger > 70) {
-      // Happy and well fed — rotate through happy Bobs
-      setBobImage('happy');
+    } else if (gameState.mood > 80) {
+      // Happy
+      svgHead.setAttribute('stroke', '#00ff88');
+      mouth.setAttribute('d', 'M 33 23 Q 40 29 47 23');
+      leftEye.setAttribute('r', '2');
+      rightEye.setAttribute('r', '2');
       moodText.textContent = getRandomMood('happy');
     } else {
-      // Neutral — sarcastic/judging
-      setBobImage('sarcastic');
+      // Neutral
+      svgHead.setAttribute('stroke', '#ffd700');
+      mouth.setAttribute('d', 'M 33 24 Q 40 26 47 24');
       moodText.textContent = getRandomMood('judging');
     }
   }
@@ -1276,7 +1232,11 @@
         // Room count hasn't gone up — caught!
         document.getElementById('buddyMood').textContent = '...nice try though 👀';
         showPopup(`${gameState.buddyName} SAYS: COMPLETE A ROOM FIRST. 👀`, 'error');
-        setBobImage('cheating');
+
+        // Make buddy shake judgementally
+        const svg = document.getElementById('companionSVG');
+        svg.classList.add('shaking');
+        setTimeout(() => svg.classList.remove('shaking'), 1500);
         return; // EXIT — no XP awarded
       } else {
         // VERIFIED! Room count went up!
@@ -1304,7 +1264,9 @@
     }
 
     // Excited companion animation
-    setBobImage('taskDone');
+    const svg = document.getElementById('companionSVG');
+    svg.style.animation = 'none';
+    setTimeout(() => { svg.style.animation = ''; }, 10);
     document.getElementById('buddyMood').textContent = getRandomMood('excited');
 
     checkBadges();
@@ -1383,7 +1345,6 @@
         // Missed a day
         gameState.streak = 1;
         gameState.lastLoginDate = today;
-        setBobImage('streakLost');
         showPopup(`STREAK RESET. START AGAIN. YOU GOT THIS. 💪`, 'warn');
       }
     }
@@ -1436,7 +1397,6 @@
     const flash = document.getElementById('levelFlash');
     flash.style.display = 'flex';
     flash.textContent = `LEVEL ${gameState.level}!`;
-    setBobImage('levelUp');
     launchConfetti();
     setTimeout(() => { flash.style.display = 'none'; }, 2000);
     showPopup(`⭐ LEVEL ${gameState.level}! ${gameState.buddyName} EVOLVED!`);
@@ -1506,7 +1466,6 @@
         saveGame();
         updateDisplay();
         if (gameState.hunger < 20) {
-          setBobImage('streakWarning');
           showPopup(`${gameState.buddyName} IS STARVING! COMPLETE A TASK! 😱`, 'error');
         }
       }
@@ -1524,6 +1483,109 @@
     if (e.key === 'Enter') goToScreen3();
   });
 
+
+  // ==================
+  // TRACKER — reads Buddy World Tracker sheet
+  // Uses Google Sheets gviz endpoint (works for publicly shared sheets)
+  // Sheet must be shared as "Anyone with link can view"
+  // ==================
+  const SHEET_ID = '1pWJEuiU6bZDtuzz2SOGSeGa4HAXSsRSsRN715O2orjw';
+  const SHEET_NAME = 'Buddy World Tracker';
+
+  // Column indexes in the sheet (0-based for gviz rows)
+  // A=0 Building, B=1 Course, C=2 Section, D=3 LessonNum, E=4 LessonName
+  // F=5 Skills, G=6 Link, H=7 EstMins, I=8 Status, R=17 XP, S=18 Started
+
+  async function loadTrackerData() {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    try {
+      const res = await fetch(url);
+      const text = await res.text();
+      // gviz wraps response in a callback — strip it
+      const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
+      const rows = json.table.rows;
+
+      let currentLesson = null;
+      let completedCount = 0;
+      let totalXP = 0;
+      const totalLessons = rows.length;
+
+      rows.forEach(row => {
+        const cells = row.c;
+        const status = cells[8] ? (cells[8].v || '') : '';
+        const xp = cells[17] ? (cells[17].v || 0) : 0;
+        totalXP += xp;
+        if (status === 'Complete' || status === 'Mastered') completedCount++;
+        if (!currentLesson && (status === 'In Progress' || status === 'Unlocked')) {
+          currentLesson = {
+            building: cells[0] ? cells[0].v : '',
+            course:   cells[1] ? cells[1].v : '',
+            section:  cells[2] ? cells[2].v : '',
+            num:      cells[3] ? cells[3].v : 0,
+            name:     cells[4] ? cells[4].v : '',
+            skills:   cells[5] ? cells[5].v : '',
+            estMins:  cells[7] ? cells[7].v : 0,
+            status:   status,
+          };
+        }
+      });
+
+      renderTracker(currentLesson, completedCount, totalLessons, totalXP);
+
+    } catch(e) {
+      document.getElementById('trackerContent').innerHTML =
+        `<div class="tracker-error">⚠ COULD NOT LOAD TRACKER<br><br>` +
+        `Make sure your sheet is shared as<br>"Anyone with link can view"<br><br>` +
+        `<span style="font-size:4px;color:#888">${e.message}</span></div>`;
+    }
+  }
+
+  function renderTracker(lesson, completed, total, xp) {
+    document.getElementById('trackerXP').textContent = `⭐ ${xp} XP`;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    if (!lesson) {
+      document.getElementById('trackerContent').innerHTML =
+        `<div class="tracker-lesson"><span class="lesson-name">🏆 ALL LESSONS COMPLETE!</span></div>
+         <div class="tracker-progress">${completed}/${total} lessons · ${pct}%
+           <div class="tracker-progress-bar"><div class="tracker-progress-fill" style="width:${pct}%"></div></div>
+         </div>`;
+      return;
+    }
+
+    const statusBadge = lesson.status === 'In Progress'
+      ? `<span style="background:#744210;color:#FEFCBF;padding:1px 4px;border-radius:2px;font-size:4px;">▶ IN PROGRESS</span>`
+      : `<span style="background:#2A69AC;color:#BEE3F8;padding:1px 4px;border-radius:2px;font-size:4px;">🔓 UNLOCKED</span>`;
+
+    document.getElementById('trackerContent').innerHTML =
+      `<div class="tracker-lesson">
+         <span class="lesson-name">LESSON ${lesson.num}: ${lesson.name.toUpperCase()} ${statusBadge}</span>
+         <span class="lesson-section">${lesson.section} · ${lesson.building}</span>
+         ⏱ EST: ${lesson.estMins} MIN &nbsp;|&nbsp; 🎯 ${lesson.skills.split(',').length} SKILLS
+       </div>
+       <div class="tracker-progress">${completed}/${total} LESSONS DONE · ${pct}% THROUGH COURSE
+         <div class="tracker-progress-bar"><div class="tracker-progress-fill" style="width:${pct}%"></div></div>
+       </div>
+       <button class="tracker-btn" onclick="goToLesson()">▶ GO TO LESSON → learn.jamf.com</button>
+       <button class="tracker-btn done-btn" onclick="markTrackerDone()">✅ MARK DONE IN TRACKER</button>
+       <button class="tracker-btn secondary" onclick="loadTrackerData()">↻ REFRESH</button>`;
+  }
+
+  function goToLesson() {
+    window.open('https://learn.jamf.com', '_blank');
+    showPopup('OPENING LESSON! COME BACK AND TICK THE BOXES IN YOUR SHEET. 💪');
+  }
+
+  function markTrackerDone() {
+    window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, '_blank');
+    showPopup('OPENING YOUR TRACKER! TICK ALL 4 BOXES TO COMPLETE THE LESSON. ✅');
+    // Feed buddy when they go to mark something done
+    gameState.hunger = Math.min(100, gameState.hunger + 10);
+    gameState.mood = Math.min(100, gameState.mood + 10);
+    saveGame();
+    updateDisplay();
+  }
+
   // ==================
   // INIT - runs when page loads
   // ==================
@@ -1536,6 +1598,8 @@
     }
     // Otherwise show screen 1 (already visible by default)
     startHungerDecay();
+    // Load tracker data
+    loadTrackerData();
   };
 </script>
 </body>
