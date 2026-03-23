@@ -1311,7 +1311,8 @@
   function getCourseUrl(course, lessonNum) {
     if (course === 'Jamf 100') {
       if (lessonNum === 25) return 'https://training.jamf.com';
-      return `https://learn.jamf.com/r/en-US/jamf-100-course-current/Lesson_${lessonNum || 0}`;
+      if (lessonNum === 0) return 'https://learn.jamf.com/r/en-US/jamf-100-course-current/Welcome';
+      return `https://learn.jamf.com/r/en-US/jamf-100-course-current/Lesson_${lessonNum}`;
     }
     const urls = {
       'Jamf 200': 'https://learn.jamf.com/en-US/bundle/jamf-200-course-current/page/Welcome.html',
