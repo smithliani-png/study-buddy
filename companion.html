@@ -811,23 +811,23 @@
         </div>
       </div>
 
-      <!-- Current task -->
+      <!-- Current task — driven by tracker -->
       <div class="current-task">
         <div class="task-header">
-          <span>📋 CURRENT MISSION</span>
+          <span>🎮 CURRENT LESSON</span>
           <span id="trackLabel" style="color: var(--pixel-yellow);">—</span>
         </div>
-        <div class="task-text" id="currentTask">No mission active. Pick one below!</div>
+        <div class="task-text" id="currentTask">Loading from tracker...</div>
         <div class="task-deadline" id="taskDeadline"></div>
       </div>
 
       <!-- Action buttons -->
       <div class="action-buttons">
-        <button class="action-btn" onclick="completeTask()">
-          ✅ TASK<br>DONE
+        <button class="action-btn" onclick="goToCurrentLesson()">
+          ▶ GO TO<br>LESSON
         </button>
-        <button class="action-btn yellow" onclick="showNewTask()">
-          📋 NEW<br>MISSION
+        <button class="action-btn yellow" onclick="loadTrackerData()">
+          ↻ REFRESH<br>TRACKER
         </button>
         <button class="action-btn" onclick="feedBuddy()">
           🍕 FEED<br>BUDDY
@@ -840,7 +840,7 @@
       <!-- TRACKER PANEL -->
       <div class="tracker-panel" id="trackerPanel">
         <div class="tracker-header">
-          U0001F3AE BUDDY WORLD TRACKER
+          🎮 BUDDY WORLD TRACKER
           <span class="tracker-xp" id="trackerXP">XP: loading...</span>
         </div>
         <div id="trackerContent"><div class="tracker-loading">CONNECTING TO TRACKER...</div></div>
@@ -1297,23 +1297,33 @@
   }
 
   function showNewTask() {
-    setNewTask();
-    showPopup('NEW MISSION ASSIGNED! 📋');
+    // Now powered by tracker — just refresh
+    loadTrackerData();
+    showPopup('CHECKING TRACKER FOR YOUR NEXT LESSON... 🎮');
   }
 
   function setNewTask() {
-    const trackTasks = tasks[gameState.track] || tasks['🔐 Cyber Security'];
-    // Pick a random task from the current track
-    const task = trackTasks[Math.floor(Math.random() * trackTasks.length)];
-    gameState.currentTask = task;
-    document.getElementById('currentTask').textContent = task;
+    // Legacy — replaced by tracker. Kept so nothing breaks.
+    loadTrackerData();
+  }
 
-    // Set a fake deadline (3 days from now)
-    const deadline = new Date();
-    deadline.setDate(deadline.getDate() + 3);
-    document.getElementById('taskDeadline').textContent = 
-      `⏰ DUE: ${deadline.toDateString().toUpperCase()}`;
+  // Current lesson URL — set by loadTrackerData
+  let currentLessonUrl = 'https://learn.jamf.com';
+
+  function goToCurrentLesson() {
+    window.open(currentLessonUrl, '_blank');
+    showPopup('OPENING LESSON! COME BACK AND TICK THE BOXES. 💪');
+    gameState.hunger = Math.min(100, gameState.hunger + 5);
+    gameState.mood = Math.min(100, gameState.mood + 5);
     saveGame();
+    updateDisplay();
+  }
+
+  // Auto-sync tracker every 60 seconds
+  // WHY: When you tick boxes in the sheet, Buddy notices
+  // within a minute and updates — no button needed.
+  function startTrackerSync() {
+    setInterval(() => { loadTrackerData(); }, 60000);
   }
 
   // ==================
@@ -1524,6 +1534,7 @@
             num:      cells[3] ? cells[3].v : 0,
             name:     cells[4] ? cells[4].v : '',
             skills:   cells[5] ? cells[5].v : '',
+            url:      cells[6] ? cells[6].v : 'https://learn.jamf.com',
             estMins:  cells[7] ? cells[7].v : 0,
             status:   status,
           };
@@ -1545,6 +1556,10 @@
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     if (!lesson) {
+      // All done!
+      document.getElementById('currentTask').textContent = '🏆 ALL LESSONS COMPLETE! YOU ABSOLUTE LEGEND.';
+      document.getElementById('taskDeadline').textContent = '';
+      document.getElementById('trackLabel').textContent = 'DONE';
       document.getElementById('trackerContent').innerHTML =
         `<div class="tracker-lesson"><span class="lesson-name">🏆 ALL LESSONS COMPLETE!</span></div>
          <div class="tracker-progress">${completed}/${total} lessons · ${pct}%
@@ -1553,37 +1568,32 @@
       return;
     }
 
+    // Update Current Lesson panel at top
+    currentLessonUrl = lesson.url || 'https://learn.jamf.com';
+    document.getElementById('currentTask').textContent =
+      `LESSON ${lesson.num}: ${lesson.name}`;
+    document.getElementById('taskDeadline').textContent =
+      `⏱ EST: ${lesson.estMins} MIN  |  🎯 ${lesson.skills ? lesson.skills.split(',').length : 0} SKILLS`;
+    document.getElementById('trackLabel').textContent = lesson.building || 'THE SERVER ROOM';
+
+    // Status badge
     const statusBadge = lesson.status === 'In Progress'
       ? `<span style="background:#744210;color:#FEFCBF;padding:1px 4px;border-radius:2px;font-size:4px;">▶ IN PROGRESS</span>`
       : `<span style="background:#2A69AC;color:#BEE3F8;padding:1px 4px;border-radius:2px;font-size:4px;">🔓 UNLOCKED</span>`;
 
+    // Tracker panel
     document.getElementById('trackerContent').innerHTML =
       `<div class="tracker-lesson">
          <span class="lesson-name">LESSON ${lesson.num}: ${lesson.name.toUpperCase()} ${statusBadge}</span>
          <span class="lesson-section">${lesson.section} · ${lesson.building}</span>
-         ⏱ EST: ${lesson.estMins} MIN &nbsp;|&nbsp; 🎯 ${lesson.skills.split(',').length} SKILLS
+         ⏱ EST: ${lesson.estMins} MIN &nbsp;|&nbsp; 🎯 ${lesson.skills ? lesson.skills.split(',').length : 0} SKILLS
        </div>
        <div class="tracker-progress">${completed}/${total} LESSONS DONE · ${pct}% THROUGH COURSE
          <div class="tracker-progress-bar"><div class="tracker-progress-fill" style="width:${pct}%"></div></div>
        </div>
-       <button class="tracker-btn" onclick="goToLesson()">▶ GO TO LESSON → learn.jamf.com</button>
-       <button class="tracker-btn done-btn" onclick="markTrackerDone()">✅ MARK DONE IN TRACKER</button>
+       <button class="tracker-btn" onclick="goToCurrentLesson()">▶ GO TO LESSON → ${lesson.url ? lesson.url.replace('https://','') : 'learn.jamf.com'}</button>
+       <button class="tracker-btn secondary" onclick="window.open('https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=1912637392','_blank')">📊 OPEN TRACKER SHEET</button>
        <button class="tracker-btn secondary" onclick="loadTrackerData()">↻ REFRESH</button>`;
-  }
-
-  function goToLesson() {
-    window.open('https://learn.jamf.com', '_blank');
-    showPopup('OPENING LESSON! COME BACK AND TICK THE BOXES IN YOUR SHEET. 💪');
-  }
-
-  function markTrackerDone() {
-    window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, '_blank');
-    showPopup('OPENING YOUR TRACKER! TICK ALL 4 BOXES TO COMPLETE THE LESSON. ✅');
-    // Feed buddy when they go to mark something done
-    gameState.hunger = Math.min(100, gameState.hunger + 10);
-    gameState.mood = Math.min(100, gameState.mood + 10);
-    saveGame();
-    updateDisplay();
   }
 
   // ==================
@@ -1598,8 +1608,9 @@
     }
     // Otherwise show screen 1 (already visible by default)
     startHungerDecay();
-    // Load tracker data
+    // Load tracker data and start auto-sync
     loadTrackerData();
+    startTrackerSync();
   };
 </script>
 </body>
